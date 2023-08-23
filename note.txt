@@ -1,0 +1,4 @@
+mysql: admin 1qaZ@wSx#E
+
+CREATE USER 'remote134'@'192.168.88.134' IDENTIFIED BY '1qaZ@wSx#E';
+GRANT ALL PRIVILEGES ON chall01.* TO 'remote134'@'192.168.88.134';
