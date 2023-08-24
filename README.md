@@ -13,12 +13,16 @@ sudo apt install apache2 mysql-server php libapache2-mod-php php-mysql
 ```
 cd ~
 git clone https://github.com/TrQ-Hoan/Chall_1a.git
+sudo chmod 775 ~ ~/Chall_1a
+sudo chmod -R 775 ~/Chall_1a/source
+sudo chown -R www-data:www-data /home/dt/Chall_1a
+
 # link source code directory to apache default directory
 sudo ln -s ~/Chall_1a/source /var/www/html/chall01
 # create new site file config
 sudo vim /etc/apache2/sites-available/chall01.conf
 # disable default conf
-sudo a2 dissite 000-default.conf
+sudo a2dissite 000-default.conf
 # enable new site config
 sudo a2ensite chall01.conf
 # restart service - update config
