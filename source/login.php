@@ -23,6 +23,7 @@ if (isset($_POST['login'])) {
     $stmt->bind_param("ss", $input_username, $input_password);
     $stmt->execute();
     $result = $stmt->get_result();
+    $conn->close();
 
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
