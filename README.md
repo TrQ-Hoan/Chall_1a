@@ -15,7 +15,7 @@ cd ~
 git clone https://github.com/TrQ-Hoan/Chall_1a.git
 sudo chmod 775 ~ ~/Chall_1a
 sudo chmod -R 775 ~/Chall_1a/source
-sudo chown -R www-data:www-data /home/dt/Chall_1a
+sudo chown -R www-data:www-data ~/Chall_1a
 
 # link source code directory to apache default directory
 sudo ln -s ~/Chall_1a/source /var/www/html/chall01
@@ -30,6 +30,10 @@ systemctl reload apache2
 ```
 
 file config [/etc/apache2/sites-available/chall01.conf](./config/chall01.conf)
+```
+cp ~/Chall_1a/config/chall01.conf /etc/apache2/sites-available
+```
+
 
 - First setup mysql
 
