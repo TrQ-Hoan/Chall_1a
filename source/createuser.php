@@ -3,7 +3,7 @@ require_once 'ConnectDB.php';
 session_start();
 $conn = mysqli_connect($MYSQL_HOST,$MYSQL_USERNAME,$MYSQL_PASSWORD);
 if (!$conn) {
-    die('Could not connect: ' . mysql_error());
+    die(mysqli_connect_errno() . ':' . mysqli_connect_error());
 }
 mysqli_select_db($conn,$MYSQL_DB);
 
@@ -12,7 +12,7 @@ function is_admin() {
 }
 
 function is_logged_in() {
-    return isset($_SESSION['username']);
+    return isset($_SESSION['user_name']);
 }
 
 function generate_hash($password, $salt) {
@@ -71,7 +71,7 @@ if (isset($_POST['login'])) {
         $input_hash = generate_hash($input_password, $salt);
 
         if ($input_hash === $stored_hash) {
-            $_SESSION['username'] = $user['username'];
+            $_SESSION['user_name'] = $user['username'];
             $_SESSION['is_admin'] = $user['is_admin'];
 
             // Direct when login success
@@ -107,7 +107,7 @@ if (isset($_POST['update_user_info'])) {
     $email = $_POST['user_email'];
     $phone = $_POST['user_phone'];
     
-    if (update_user_info($_SESSION['username'], $full_name, $email, $phone)) {
+    if (update_user_info($_SESSION['user_name'], $full_name, $email, $phone)) {
         // Thành công, thực hiện hành động sau khi cập nhật thông tin
     } else {
         // Lỗi, xử lý thông báo lỗi
