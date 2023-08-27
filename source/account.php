@@ -61,7 +61,13 @@ function update_user_info($username, $full_name, $email, $phone)
     }
 }
 
-$cur_user_id = isset($_GET['id']) ? $_GET['id'] : 0;
+$cur_user_id = isset($_GET['id']) && ctype_digit($_GET['id']) ? (int)$_GET['id'] : 0;
+
+if ($_SESSION['user_role'] !== 'teacher' && $_SESSION['user_id'] !== $cur_user_id) {
+    http_response_code(403);
+    include("_err403.php");
+    exit();
+}
 
 if ($cur_user_id !== 0) {
     $sql = "SELECT * FROM `users` WHERE `id` = ?;";
@@ -137,7 +143,7 @@ $conn->close();
                     <form action="/logout.php" class="form-outline me-2 mb-1 mt-1">
                         <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-box-arrow-right"></i></button>
                     </form>
-                    <a href="/account.php?id=<?php echo $_SESSION['user_id'];?>" class="btn btn-sm btn-primary mb-1 mt-1"><i class="bi bi-person-square"></i></a>
+                    <a href="/account.php?id=<?php echo $_SESSION['user_id']; ?>" class="btn btn-sm btn-primary mb-1 mt-1"><i class="bi bi-person-square"></i></a>
                 </ul>
             </div>
         </div>
@@ -148,27 +154,35 @@ $conn->close();
             <form>
                 <!-- Name input -->
                 <div class="form-outline mb-4">
-                    <input type="text" id="registerName" class="form-control" placeholder="Full Name" <?php if (isset($cur_user_obj)) {echo 'value="' . $cur_user_obj['fullname'] . '"';}?>/>
+                    <input type="text" id="registerName" class="form-control" placeholder="Full Name" <?php if (isset($cur_user_obj)) {
+                                                                                                            echo 'value="' . $cur_user_obj['fullname'] . '"';
+                                                                                                        } ?> />
                 </div>
 
                 <!-- Username input -->
                 <div class="form-outline mb-4">
-                    <input type="text" id="registerUsername" class="form-control" placeholder="Username" <?php if (isset($cur_user_obj)) {echo 'value="' . $cur_user_obj['username'] . '"';}?>/>
+                    <input type="text" id="registerUsername" class="form-control" placeholder="Username" <?php if (isset($cur_user_obj)) {
+                                                                                                                echo 'value="' . $cur_user_obj['username'] . '"';
+                                                                                                            } ?> />
                 </div>
 
                 <!-- Email input -->
                 <div class="form-outline mb-4">
-                    <input type="email" id="registerEmail" class="form-control" placeholder="Email" <?php if (isset($cur_user_obj)) {echo 'value="' . $cur_user_obj['email'] . '"';}?>/>
+                    <input type="email" id="registerEmail" class="form-control" placeholder="Email" <?php if (isset($cur_user_obj)) {
+                                                                                                        echo 'value="' . $cur_user_obj['email'] . '"';
+                                                                                                    } ?> />
                 </div>
 
                 <!-- Phone number -->
                 <div class="form-outline mb-4">
-                    <input type="text" id="registerPhone" class="form-control" placeholder="Phone" <?php if (isset($cur_user_obj)) {echo 'value="' . $cur_user_obj['phone'] . '"';}?>/>
+                    <input type="text" id="registerPhone" class="form-control" placeholder="Phone" <?php if (isset($cur_user_obj)) {
+                                                                                                        echo 'value="' . $cur_user_obj['phone'] . '"';
+                                                                                                    } ?> />
                 </div>
 
                 <!-- Password input -->
                 <div class="form-outline mb-4">
-                    <input type="password" id="registerPassword" class="form-control" placeholder="Password" <?php if (isset($cur_user_obj)) {echo 'value="00000000"';}?>/>
+                    <input type="password" id="registerPassword" class="form-control" placeholder="Password" />
                 </div>
 
                 <!-- Repeat Password input -->
@@ -177,7 +191,11 @@ $conn->close();
                 </div>
 
                 <!-- Submit button -->
-                <button type="submit" class="btn btn-primary btn-block mb-3"> <?php if (isset($cur_user_obj)) {echo 'Save';} else {echo 'Create';}?></button>
+                <button type="submit" class="btn btn-primary btn-block mb-3"> <?php if (isset($cur_user_obj)) {
+                                                                                    echo 'Save';
+                                                                                } else {
+                                                                                    echo 'Create';
+                                                                                } ?></button>
             </form>
         </div>
     </section>

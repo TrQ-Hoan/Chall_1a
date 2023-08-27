@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS `assignments` (
     `description` VARCHAR(255) NOT NULL COMMENT 'Mô tả bài tập',
     `files` VARCHAR(100) NOT NULL COMMENT 'Đường dẫn bài tập',
     `dueto` DATETIME DEFAULT NULL COMMENT 'Hạn nộp',
-    `lastupdate` DATETIME NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Thời gian tạo'
+    `lastupdate` DATETIME NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Thời gian sửa cuối cùng',
+    `createat` DATETIME NOT NULL DEFAULT current_timestamp() COMMENT 'Thời gian tạo'
 );
 
 ALTER TABLE `assignments` ADD CONSTRAINT fk_teacher_assignment FOREIGN KEY (`teacherid`) REFERENCES `users`(`id`);
@@ -28,7 +29,8 @@ CREATE TABLE IF NOT EXISTS `submits` (
     `studentid` INT NOT NULL COMMENT 'ID học sinh submit',
     `title` VARCHAR(256) NOT NULL COMMENT 'Tên đề bài',
     `files` TEXT NOT NULL COMMENT 'Đường dẫn file submit',
-    `createdat` DATETIME NOT NULL DEFAULT current_timestamp() COMMENT 'Thời gian submit'
+    `lastupdate` DATETIME NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Thời gian chỉnh sửa cuối cùng',
+    `createat` DATETIME NOT NULL DEFAULT current_timestamp() COMMENT 'Thời gian submit'
 );
 
 ALTER TABLE `submits` ADD CONSTRAINT fk_assignment FOREIGN KEY (`assignmentid`) REFERENCES `assignments`(`id`);
@@ -40,7 +42,8 @@ CREATE TABLE IF NOT EXISTS `challenges` (
     `title` TEXT NOT NULL COMMENT 'Tên challenge',
     `files` VARCHAR(100) NOT NULL COMMENT 'Đường dẫn file',
     `hints` TEXT DEFAULT NULL,
-    `lastupdate` DATETIME NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Thời gian tạo'
+    `lastupdate` DATETIME NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Thời gian chỉnh sửa cuối cùng',
+    `createat` DATETIME NOT NULL DEFAULT current_timestamp() COMMENT 'Thời gian tạo'
 );
 
 ALTER TABLE `challenges` ADD CONSTRAINT fk_teacher_challenge FOREIGN KEY (`teacherid`) REFERENCES `users`(`id`);
@@ -50,7 +53,8 @@ CREATE TABLE IF NOT EXISTS `messages` (
     `idsend` INT NOT NULL COMMENT 'ID người gửi',
     `idrec` INT NOT NULL COMMENT 'ID người nhận',
     `content` TEXT DEFAULT NULL,
-    `lastupdate` DATETIME NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Thời gian nhắn tin'
+    `lastupdate` DATETIME NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Thời gian chỉnh sửa cuối cùng',
+    `createat` DATETIME NOT NULL DEFAULT current_timestamp() COMMENT 'Thời gian nhắn tin'
 );
 
 ALTER TABLE `messages` ADD CONSTRAINT fk_sender FOREIGN KEY (`idsend`) REFERENCES `users`(`id`);
