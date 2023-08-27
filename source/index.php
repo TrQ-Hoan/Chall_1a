@@ -72,7 +72,7 @@ if (!isset($_SESSION['user_name'])) {
                                 <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo rand(1, 10); ?></div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                                <i class="bi bi-calendar2-check-fill"></i>
                             </div>
                         </div>
                     </div>
@@ -89,7 +89,7 @@ if (!isset($_SESSION['user_name'])) {
                                 <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo rand(1, 10); ?></div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                <i class="bi bi-flag-fill"></i>
                             </div>
                         </div>
                     </div>
@@ -116,7 +116,7 @@ if (!isset($_SESSION['user_name'])) {
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                <i class="bi bi-clipboard2-fill"></i>
                             </div>
                         </div>
                     </div>
@@ -133,7 +133,7 @@ if (!isset($_SESSION['user_name'])) {
                                 <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo rand(6, 20); ?></div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-comments fa-2x text-gray-300"></i>
+                                <i class="bi bi-chat-dots-fill"></i>
                             </div>
                         </div>
                     </div>

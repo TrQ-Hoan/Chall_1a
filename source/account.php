@@ -12,6 +12,8 @@ if (!$conn) {
 }
 mysqli_select_db($conn, $MYSQL_DB);
 
+$cur_user_id = isset($_GET['id']) && ctype_digit($_GET['id']) ? (int)$_GET['id'] : 0;
+
 function is_admin()
 {
     return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 1;
@@ -46,13 +48,13 @@ function create_user($username, $password, $full_name, $email, $phone)
     }
 }
 
-function update_user_info($username, $full_name, $email, $phone)
+function update_user($username, $email, $phone, $password)
 {
     global $conn;
 
-    $sql = "UPDATE users SET full_name = ?, email = ?, phone = ? WHERE username = ?";
+    $sql = "UPDATE `users` SET `email` = ?, `phone` = ?" . (empty($password) ? "" : " `password = ?`") . " WHERE `username` = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssss", $full_name, $email, $phone, $username);
+    $stmt->bind_param("ssss", $email, $phone, $password, $username);
 
     if ($stmt->execute()) {
         return true;
@@ -61,12 +63,69 @@ function update_user_info($username, $full_name, $email, $phone)
     }
 }
 
-$cur_user_id = isset($_GET['id']) && ctype_digit($_GET['id']) ? (int)$_GET['id'] : 0;
+
 
 if ($_SESSION['user_role'] !== 'teacher' && $_SESSION['user_id'] !== $cur_user_id) {
     http_response_code(403);
     include("_err403.php");
     exit();
+}
+
+if (isset($_POST['create_user'])) {
+    $username = $_POST['accountUsername'];
+    $password = $_POST['accountPassword'];
+    $password2 = $_POST['accountRepeatPassword'];
+    $full_name = $_POST['accountName'];
+    $email = $_POST['accountEmail'];
+    $phone = $_POST['accountPhone'];
+
+    if (
+        empty($username) && empty($password) && empty($password2) &&
+        empty($full_name) && empty($email) && empty($phone)
+    ) {
+        $account_error = 'Please fill all form!';
+    }
+
+    if ($password !== $password2 && !isset($account_error)) {
+        $account_error = 'Password not match!';
+    }
+
+    // if (create_user($username, $password, $full_name, $email, $phone)) {
+    //     // Thành công, thực hiện hành động sau khi tạo user
+    // } else {
+    //     // Lỗi, xử lý thông báo lỗi
+    // }
+}
+
+
+if (isset($_POST['update_user'])) {
+    $email = $_POST['accountEmail'];
+    $phone = $_POST['accountPhone'];
+    $password = $_POST['accountPassword'];
+    $password2 = $_POST['accountRepeatPassword'];
+
+    if (empty($email) && empty($phone)) {
+        $account_error = 'Please fill all form!';
+    }
+
+    if ($password !== $password2 && !isset($account_error)) {
+        $account_error = 'Password not match';
+    }
+
+    $ret1 = $_POST['update_user'] . ' ' . $email . ' ' . $phone . ' ' . (empty($password) ? htmlspecialchars('<null>') : '"' . $password . '"');
+    $sql = "UPDATE `users` SET `email` = ?, `phone` = ?" . (empty($password) ? "" : " `password = ?`") . " WHERE `username` = ?";
+    // $ret1 = $_POST['update_user'] . ' ' . $email . ' ' . $phone . ' "' . $password . '"';
+    echo '<pre>';
+    print_r($ret1);
+    echo '<br/>';
+    print_r($sql);
+    echo '</pre>';
+
+    // if (update_user($_POST['update_user'], $email, $phone, $password)) {
+    //     // Thành công, thực hiện hành động sau khi cập nhật thông tin
+    // } else {
+    //     // Lỗi, xử lý thông báo lỗi
+    // }
 }
 
 if ($cur_user_id !== 0) {
@@ -76,31 +135,16 @@ if ($cur_user_id !== 0) {
     $stmt->execute();
     $result = $stmt->get_result();
     $cur_user_obj = $result->fetch_assoc();
-}
-
-if (isset($_POST['create_user'])) {
-    $username = $_POST['new_username'];
-    $password = $_POST['new_password'];
-    $full_name = $_POST['new_full_name'];
-    $email = $_POST['new_email'];
-    $phone = $_POST['new_phone'];
-
-    if (create_user($username, $password, $full_name, $email, $phone)) {
-        // Thành công, thực hiện hành động sau khi tạo user
-    } else {
-        // Lỗi, xử lý thông báo lỗi
+    if (!isset($cur_user_obj)) {
+        http_response_code(404);
+        include("_err404.php");
+        exit();
     }
-}
 
-if (isset($_POST['update_user_info'])) {
-    $full_name = $_POST['user_full_name'];
-    $email = $_POST['user_email'];
-    $phone = $_POST['user_phone'];
-
-    if (update_user_info($_SESSION['user_name'], $full_name, $email, $phone)) {
-        // Thành công, thực hiện hành động sau khi cập nhật thông tin
-    } else {
-        // Lỗi, xử lý thông báo lỗi
+    // refill last submit
+    if (isset($_POST['update_user']) || isset($_POST['create_user'])) {
+        $cur_user_obj['email'] = $_POST['accountEmail'];
+        $cur_user_obj['phone'] = $_POST['accountPhone'];
     }
 }
 
@@ -151,51 +195,52 @@ $conn->close();
     <!-- main page -->
     <section class="w-100 p-4 d-flex justify-content-center pb-4">
         <div style="width: 26rem;">
-            <form>
+            <h2 class="form-outline mb-4">Account information</h2>
+            <form method="POST" name="<?php echo isset($cur_user_obj) ? 'update_user' : 'create_user'; ?>">
                 <!-- Name input -->
-                <div class="form-outline mb-4">
-                    <input type="text" id="registerName" class="form-control" placeholder="Full Name" <?php if (isset($cur_user_obj)) {
-                                                                                                            echo 'value="' . $cur_user_obj['fullname'] . '"';
-                                                                                                        } ?> />
+                <div class="form-floating mb-4">
+                    <input type="text" name="accountName" class="form-control" placeholder="Full Name" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['fullname'] . '" disabled=True' : ''; ?> />
+                    <label for="floatingInput">Full Name</label>
                 </div>
 
                 <!-- Username input -->
-                <div class="form-outline mb-4">
-                    <input type="text" id="registerUsername" class="form-control" placeholder="Username" <?php if (isset($cur_user_obj)) {
-                                                                                                                echo 'value="' . $cur_user_obj['username'] . '"';
-                                                                                                            } ?> />
+                <div class="form-floating mb-4">
+                    <input type="text" name="accountUsername" class="form-control" placeholder="User Name" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['username'] . '" disabled=True' : ''; ?> />
+                    <label for="floatingInput">User Name</label>
                 </div>
 
                 <!-- Email input -->
-                <div class="form-outline mb-4">
-                    <input type="email" id="registerEmail" class="form-control" placeholder="Email" <?php if (isset($cur_user_obj)) {
-                                                                                                        echo 'value="' . $cur_user_obj['email'] . '"';
-                                                                                                    } ?> />
+                <div class="form-floating mb-4">
+                    <input type="email" name="accountEmail" class="form-control" placeholder="Email" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['email'] . '"' : ''; ?> />
+                    <label for="floatingInput">Email</label>
                 </div>
 
                 <!-- Phone number -->
-                <div class="form-outline mb-4">
-                    <input type="text" id="registerPhone" class="form-control" placeholder="Phone" <?php if (isset($cur_user_obj)) {
-                                                                                                        echo 'value="' . $cur_user_obj['phone'] . '"';
-                                                                                                    } ?> />
+                <div class="form-floating mb-4">
+                    <input type="text" name="accountPhone" class="form-control" placeholder="Phone" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['phone'] . '"' : ''; ?> />
+                    <label for="floatingInput">Phone</label>
                 </div>
 
                 <!-- Password input -->
-                <div class="form-outline mb-4">
-                    <input type="password" id="registerPassword" class="form-control" placeholder="Password" />
+                <div class="form-floating mb-4">
+                    <input type="password" name="accountPassword" class="form-control" placeholder="Password" />
+                    <label for="floatingInput">Password</label>
                 </div>
 
                 <!-- Repeat Password input -->
-                <div class="form-outline mb-4">
-                    <input type="password" id="registerRepeatPassword" class="form-control" placeholder="Repeat password" />
+                <div class="form-floating mb-4">
+                    <input type="password" name="accountRepeatPassword" class="form-control" placeholder="Repeat password" />
+                    <label for="floatingInput">Repeat password</label>
+                </div>
+
+                <div class="text-center">
+                    <a style="color:red"><?php echo $account_error; ?></a>
                 </div>
 
                 <!-- Submit button -->
-                <button type="submit" class="btn btn-primary btn-block mb-3"> <?php if (isset($cur_user_obj)) {
-                                                                                    echo 'Save';
-                                                                                } else {
-                                                                                    echo 'Create';
-                                                                                } ?></button>
+                <button type="submit" class="btn btn-primary btn-block mb-3" name="<?php echo isset($cur_user_obj) ? 'update_user' : 'create_user'; ?>" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['username'] . '"' : ''; ?>>
+                    <?php echo isset($cur_user_obj) ? 'Save' : 'Create'; ?>
+                </button>
             </form>
         </div>
     </section>
