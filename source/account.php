@@ -57,6 +57,8 @@ if ($_SESSION['user_role'] !== 'teacher' && $_SESSION['user_id'] !== $cur_user_i
     exit();
 }
 
+$page_stat_cfg = 'create_user';
+
 if (isset($_POST['create_user'])) {
     $username = $_POST['accountUsername'];
     $password = $_POST['accountPassword'];
@@ -126,6 +128,7 @@ if ($cur_user_id !== 0) {
         include("_err404.php");
         exit();
     }
+    $page_stat_cfg = 'update_user';
 }
 
 // refill last submit
@@ -191,18 +194,18 @@ $conn->close();
     <section class="w-100 p-4 d-flex justify-content-center pb-4">
         <div style="width: 26rem;">
             <h2 class="form-outline mb-4">Account information</h2>
-            <form method="POST" name="<?php echo isset($cur_user_obj) ? 'update_user' : 'create_user'; ?>">
+            <form method="POST" name="<?php echo $page_stat_cfg; ?>">
                 <!-- Name input -->
                 <div class="form-floating mb-4">
                     <input type="text" name="accountName" class="form-control" placeholder="Full Name" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['fullname'] . '"' : '';
-                                                                                                        echo isset($_POST['update_user']) ? ' disabled=True' : ''; ?> />
+                                                                                                        echo $page_stat_cfg === 'update_user' ? ' disabled=True' : ''; ?> />
                     <label for="floatingInput">Full Name</label>
                 </div>
 
                 <!-- Username input -->
                 <div class="form-floating mb-4">
                     <input type="text" name="accountUsername" class="form-control" placeholder="User Name" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['username'] . '"' : '';
-                                                                                                            echo isset($_POST['update_user']) ? ' disabled=True' : ''; ?> />
+                                                                                                            echo $page_stat_cfg === 'update_user' ? ' disabled=True' : ''; ?> />
                     <label for="floatingInput">User Name</label>
                 </div>
 
@@ -235,7 +238,7 @@ $conn->close();
                 </div>
 
                 <!-- Submit button -->
-                <button type="submit" class="btn btn-primary btn-block mb-3" name="<?php echo isset($cur_user_obj) ? 'update_user' : 'create_user'; ?>" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['username'] . '"' : ''; ?>>
+                <button type="submit" class="btn btn-primary btn-block mb-3" name="<?php echo $page_stat_cfg; ?>" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['username'] . '"' : ''; ?>>
                     <?php echo isset($cur_user_obj) ? 'Save' : 'Create'; ?>
                 </button>
             </form>
