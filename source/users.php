@@ -133,7 +133,7 @@ $conn->close();
                         echo '<td style="text-align:center; width:100px; white-space:nowrap;">';
                         if ($_SESSION['user_role'] === 'teacher') {
                             echo '<a href="/account.php?id=' . $row['id'] . '" class="btn btn-sm btn-warning me-2"><i class="bi bi-pencil-square"></i></a>';
-                            echo '<a href="/remove.php?id=' . $row['id'] . '" class="btn btn-sm btn-danger me-2"><i class="bi bi-trash"></i></a>';
+                            echo '<a href="/remove.php?tbl=user&id=' . $row['id'] . '" class="btn btn-sm btn-danger me-2"><i class="bi bi-trash"></i></a>';
                         }
                         echo '<a href="/user.php?id=' . $row['id'] . '" class="btn btn-sm btn-info me-2"><i class="bi bi-info-circle"></i></a>';
                         echo '</td>';

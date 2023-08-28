@@ -198,14 +198,14 @@ $conn->close();
                 <!-- Name input -->
                 <div class="form-floating mb-4">
                     <input type="text" name="accountName" class="form-control" placeholder="Full Name" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['fullname'] . '"' : '';
-                                                                                                        echo $page_stat_cfg === 'update_user' ? ' disabled=True' : ''; ?> />
+                                                                                                        echo $page_stat_cfg === 'update_user' ? ' readonly' : ''; ?> />
                     <label for="floatingInput">Full Name</label>
                 </div>
 
                 <!-- Username input -->
                 <div class="form-floating mb-4">
                     <input type="text" name="accountUsername" class="form-control" placeholder="User Name" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['username'] . '"' : '';
-                                                                                                            echo $page_stat_cfg === 'update_user' ? ' disabled=True' : ''; ?> />
+                                                                                                            echo $page_stat_cfg === 'update_user' ? ' readonly' : ''; ?> />
                     <label for="floatingInput">User Name</label>
                 </div>
 
