@@ -14,16 +14,6 @@ mysqli_select_db($conn, $MYSQL_DB);
 
 $cur_user_id = isset($_GET['id']) && ctype_digit($_GET['id']) ? (int)$_GET['id'] : 0;
 
-function is_admin()
-{
-    return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === 1;
-}
-
-function is_logged_in()
-{
-    return isset($_SESSION['user_name']);
-}
-
 function generate_hash($password, $salt)
 {
     return hash('sha256', $password . $salt);
@@ -33,13 +23,11 @@ function create_user($username, $password, $full_name, $email, $phone)
 {
     global $conn;
 
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    // $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    $sql = "INSERT INTO users (username, password, full_name, email, phone, is_admin) VALUES (?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO `users` (`username`, `password`, `fullname`, `email`, `phone`, `role`) VALUES (?, ?, ?, ?, ?, 'student')";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssssi", $username, $hashed_password, $full_name, $email, $phone, $is_admin);
-
-    $is_admin = is_admin() ? 1 : 0;
+    $stmt->bind_param("sssss", $username, $password, $full_name, $email, $phone);
 
     if ($stmt->execute()) {
         return true;
@@ -63,8 +51,6 @@ function update_user($username, $email, $phone, $password)
     }
 }
 
-
-
 if ($_SESSION['user_role'] !== 'teacher' && $_SESSION['user_id'] !== $cur_user_id) {
     http_response_code(403);
     include("_err403.php");
@@ -80,8 +66,8 @@ if (isset($_POST['create_user'])) {
     $phone = $_POST['accountPhone'];
 
     if (
-        empty($username) && empty($password) && empty($password2) &&
-        empty($full_name) && empty($email) && empty($phone)
+        empty($username) || empty($password) || empty($password2) ||
+        empty($full_name) || empty($email) || empty($phone)
     ) {
         $account_error = 'Please fill all form!';
     }
@@ -140,18 +126,27 @@ if ($cur_user_id !== 0) {
         include("_err404.php");
         exit();
     }
+}
 
-    // refill last submit
-    if (isset($_POST['update_user']) || isset($_POST['create_user'])) {
-        $cur_user_obj['email'] = $_POST['accountEmail'];
-        $cur_user_obj['phone'] = $_POST['accountPhone'];
+// refill last submit
+if (isset($_POST['update_user']) || isset($_POST['create_user'])) {
+    if (!isset($cur_user_obj)) {
+        $cur_user_obj = [
+            'username' => isset($_POST['accountUsername']) ? $_POST['accountUsername'] : '',
+            'fullname' => isset($_POST['accountName']) ? $_POST['accountName'] : '',
+            'email' => '',
+            'phone' => ''
+        ];
     }
+    $cur_user_obj['email'] = $_POST['accountEmail'];
+    $cur_user_obj['phone'] = $_POST['accountPhone'];
 }
 
 $conn->close();
 ?>
 
 <!DOCTYPE html>
+<html lang='en' data-bs-theme="auto">
 
 <head>
     <meta charset="UTF-8">
@@ -199,13 +194,15 @@ $conn->close();
             <form method="POST" name="<?php echo isset($cur_user_obj) ? 'update_user' : 'create_user'; ?>">
                 <!-- Name input -->
                 <div class="form-floating mb-4">
-                    <input type="text" name="accountName" class="form-control" placeholder="Full Name" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['fullname'] . '" disabled=True' : ''; ?> />
+                    <input type="text" name="accountName" class="form-control" placeholder="Full Name" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['fullname'] . '"' : '';
+                                                                                                        echo isset($_POST['update_user']) ? ' disabled=True' : ''; ?> />
                     <label for="floatingInput">Full Name</label>
                 </div>
 
                 <!-- Username input -->
                 <div class="form-floating mb-4">
-                    <input type="text" name="accountUsername" class="form-control" placeholder="User Name" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['username'] . '" disabled=True' : ''; ?> />
+                    <input type="text" name="accountUsername" class="form-control" placeholder="User Name" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['username'] . '"' : '';
+                                                                                                            echo isset($_POST['update_user']) ? ' disabled=True' : ''; ?> />
                     <label for="floatingInput">User Name</label>
                 </div>
 
