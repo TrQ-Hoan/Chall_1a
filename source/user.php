@@ -25,6 +25,24 @@ if (!isset($cur_user_obj)) {
     include("_err404.php");
     exit();
 }
+$stmt->close();
+
+$sql = "SELECT * FROM `messages` WHERE (`idsend` = ? AND `idrec` = ?) OR (`idsend` = ? AND `idrec` = ?);";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("iiii", $_SESSION['user_id'], $cur_user_id, $cur_user_id, $_SESSION['user_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+$stmt->close();
+
+if (isset($_POST['send'])) {
+    $message = $_POST['content'];
+    $sql = "INSERT INTO `messages` (`idsend`,`idrec`,`content`) VALUES (?,?,?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iis", $_SESSION['user_id'], $cur_user_id, $message);
+    if (!$stmt->execute()) {
+        $user_error = 'Send message fail';
+    }
+}
 
 $conn->close();
 ?>
@@ -99,19 +117,19 @@ $conn->close();
                 <div class="col-md-2">
                     <form>
                         <!-- Name -->
-                        <div class="small text-secondary">Full Name</div>
+                        <div class="small text-secondary"><sub>Full Name</sub></div>
                         <b><?php echo $cur_user_obj['fullname']; ?> </b>
                         <!-- Username -->
-                        <div class="small text-secondary">User Name</div>
+                        <div class="small text-secondary"><sub>User Name</sub></div>
                         <b><?php echo $cur_user_obj['username']; ?> </b>
                         <!-- Email -->
-                        <div class="small text-secondary">Email</div>
+                        <div class="small text-secondary"><sub>Email</sub></div>
                         <b><?php echo $cur_user_obj['email']; ?> </b>
                         <!-- Phone number -->
-                        <div class="small text-secondary">Phone<b></div>
+                        <div class="small text-secondary"><sub>Phone</sub><b></div>
                         <?php echo $cur_user_obj['phone']; ?> </b>
                         <!-- Error message -->
-                        <div class="text-center"><a style="color:red"><?php echo $account_error; ?></a></div>
+                        <div class="text-center"><a style="color:red"><?php echo $user_error; ?></a></div>
                     </form>
                 </div>
                 <div class="col-md-8">
@@ -127,36 +145,34 @@ $conn->close();
                         <hr>
 
                         <!-- Chat messages will be displayed here -->
-                        <div style="height: 400px; overflow-y: scroll;">
-                            <div class="flex-grow-1 mb-1">
-                                <div class="w-100">
-                                    <div class="d-flex flex-column align-items-start">
-                                        <div class="bg-secondary text-white border text-secondary p-2 px-3 rounded-2">
-                                            Hey yo, wassup
-                                            <div class="chat-time">12:16 PM (edited)</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div style="height: 400px; overflow-y: scroll;" id="scrollContainer">
+                            <?php
+                            while ($message = $result->fetch_assoc()) {
+                                if ($message['idsend'] == $_SESSION['user_id']) {
+                                    echo '<div class="d-flex justify-content-end text-end mb-1"><div class="w-100"><div class="d-flex flex-column align-items-end"><div class="bg-primary text-white p-2 px-3 rounded-2" style="max-width: 70%;">';
+                                    echo $message['content'];
+                                    echo '<div class="chat-time">' . $message['createat'] . ($message['lastupdate'] > $message['createat'] ? ' (edited) ' : ' ') . '</div>';
+                                    echo '</div></div></div></div>';
+                                } else {
+                                    echo '<div class="flex-grow-1 mb-1"><div class="w-100"><div class="d-flex flex-column align-items-start"><div class="bg-secondary text-white border text-secondary p-2 px-3 rounded-2" style="max-width: 70%;">';
+                                    echo $message['content'];
+                                    echo '<div class="chat-time">' . $message['createat'] . ($message['lastupdate'] > $message['createat'] ? ' (edited) ' : ' ') . '</div>';
+                                    echo '</div></div></div></div>';
+                                }
+                            ?>
+                            <?php
+                            }
 
-                            <div class="d-flex justify-content-end text-end mb-1">
-                                <div class="w-100">
-                                    <div class="d-flex flex-column align-items-end">
-                                        <div class="bg-primary text-white p-2 px-3 rounded-2">
-                                            With pleasure
-                                            <div class="chat-time">12:35 PM</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
+                            $stmt->close(); ?>
                             <!-- ... Add more chat boxes here ... -->
                         </div>
                     </div>
-                    <div class="input-group mt-3">
-                        <input type="text" class="form-control" placeholder="Type your message">
-                        <button class="btn btn-primary">Send</button>
-                    </div>
+                    <form method="POST" name="send">
+                        <div class="input-group mt-3">
+                            <input type="text" class="form-control" name="content" placeholder="Type your message">
+                            <button class="btn btn-primary" name="send">Send</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </section>
@@ -198,5 +214,11 @@ $conn->close();
         </ul>
     </div>
 </body>
+<script>
+    window.onload = function() {
+        var scrollContainer = document.getElementById("scrollContainer");
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    };
+</script>
 
 </html>

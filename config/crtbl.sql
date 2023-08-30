@@ -1,3 +1,10 @@
+ALTER TABLE `assignments` DROP FOREIGN KEY fk_teacher_assignment;
+ALTER TABLE `submits` DROP FOREIGN KEY fk_assignment;
+ALTER TABLE `submits` DROP FOREIGN KEY fk_student_submit;
+ALTER TABLE `challenges` DROP FOREIGN KEY fk_teacher_challenge;
+ALTER TABLE `messages` DROP FOREIGN KEY fk_sender;
+ALTER TABLE `messages` DROP FOREIGN KEY fk_receiver;
+
 DROP TABLE IF EXISTS `users`, `assignments`, `submits`, `challenges`, `messages`;
 
 CREATE TABLE IF NOT EXISTS `users` (
