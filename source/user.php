@@ -27,14 +27,7 @@ if (!isset($cur_user_obj)) {
 }
 $stmt->close();
 
-$sql = "SELECT * FROM `messages` WHERE (`idsend` = ? AND `idrec` = ?) OR (`idsend` = ? AND `idrec` = ?);";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("iiii", $_SESSION['user_id'], $cur_user_id, $cur_user_id, $_SESSION['user_id']);
-$stmt->execute();
-$result = $stmt->get_result();
-$stmt->close();
-
-if (isset($_POST['send'])) {
+if (isset($_POST['send']) && !empty($message)) {
     $message = $_POST['content'];
     $sql = "INSERT INTO `messages` (`idsend`,`idrec`,`content`) VALUES (?,?,?)";
     $stmt = $conn->prepare($sql);
@@ -42,7 +35,14 @@ if (isset($_POST['send'])) {
     if (!$stmt->execute()) {
         $user_error = 'Send message fail';
     }
+    $stmt->close();
 }
+
+$sql = "SELECT * FROM `messages` WHERE (`idsend` = ? AND `idrec` = ?) OR (`idsend` = ? AND `idrec` = ?);";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("iiii", $_SESSION['user_id'], $cur_user_id, $cur_user_id, $_SESSION['user_id']);
+$stmt->execute();
+$result = $stmt->get_result();
 
 $conn->close();
 ?>
@@ -73,6 +73,7 @@ $conn->close();
 
         .chat-time {
             font-size: 0.8rem;
+            color: white;
             opacity: 0.6;
             margin-top: 4px;
             text-align: right;
@@ -149,13 +150,21 @@ $conn->close();
                             <?php
                             while ($message = $result->fetch_assoc()) {
                                 if ($message['idsend'] == $_SESSION['user_id']) {
-                                    echo '<div class="d-flex justify-content-end text-end mb-1"><div class="w-100"><div class="d-flex flex-column align-items-end"><div class="bg-primary text-white p-2 px-3 rounded-2" style="max-width: 70%;">';
-                                    echo $message['content'];
+                                    echo '<div class="d-flex justify-content-end text-end mb-1"><div class="w-100"><div class="d-flex flex-column align-items-end">';
+                                    if (empty($message['content'])) {
+                                        echo '<div class="bg-primary text-white-50 p-2 px-3 rounded-2" style="max-width: 70%;"><i>message has deleted</i>';
+                                    } else {
+                                        echo '<div class="bg-primary text-white p-2 px-3 rounded-2" style="max-width: 70%;">' . $message['content'];
+                                    }
                                     echo '<div class="chat-time">' . $message['createat'] . ($message['lastupdate'] > $message['createat'] ? ' (edited) ' : ' ') . '</div>';
                                     echo '</div></div></div></div>';
                                 } else {
-                                    echo '<div class="flex-grow-1 mb-1"><div class="w-100"><div class="d-flex flex-column align-items-start"><div class="bg-secondary text-white border text-secondary p-2 px-3 rounded-2" style="max-width: 70%;">';
-                                    echo $message['content'];
+                                    echo '<div class="flex-grow-1 mb-1"><div class="w-100"><div class="d-flex flex-column align-items-start">';
+                                    if (empty($message['content'])) {
+                                        echo '<div class="bg-secondary text-black-50 border text-secondary p-2 px-3 rounded-2" style="max-width: 70%;"><i>message has deleted</i>';
+                                    } else {
+                                        echo '<div class="bg-secondary text-white border text-secondary p-2 px-3 rounded-2" style="max-width: 70%;">' . $message['content'];
+                                    }
                                     echo '<div class="chat-time">' . $message['createat'] . ($message['lastupdate'] > $message['createat'] ? ' (edited) ' : ' ') . '</div>';
                                     echo '</div></div></div></div>';
                                 }
@@ -170,7 +179,7 @@ $conn->close();
                     <form method="POST" name="send">
                         <div class="input-group mt-3">
                             <input type="text" class="form-control" name="content" placeholder="Type your message">
-                            <button class="btn btn-primary" name="send">Send</button>
+                            <button class="btn btn-primary" name="send"><i class="bi bi-send-fill"></i></button>
                         </div>
                     </form>
                 </div>
