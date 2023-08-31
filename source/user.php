@@ -27,11 +27,41 @@ if (!isset($cur_user_obj)) {
 }
 $stmt->close();
 
-if (isset($_POST['send']) && !empty($message)) {
-    $message = $_POST['content'];
+$send_btn = 'send';
+$msg_edit = '';
+
+if (isset($_GET['del']) && ctype_digit($_GET['del'])) {
+    $del_msg_id = (int)$_GET['del'];
+    $sql = "UPDATE `messages` SET `content` = '' WHERE `id` = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $del_msg_id);
+    if (!$stmt->execute()) {
+        $user_error = 'Delete message fail';
+    }
+    $stmt->close();
+    header('location:user.php?id=' . $_GET['id']);
+}
+
+if (isset($_GET['edit'])) {
+    $send_btn = 'edit';
+}
+
+if (isset($_POST['edit']) && !empty($_POST['content'])) {
+    $edit_msg_id = (int)$_GET['edit'];
+    $sql = "UPDATE `messages` SET `content` = ? WHERE `id` = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("si", $_POST['content'], $edit_msg_id);
+    if (!$stmt->execute()) {
+        $user_error = 'Edit message fail';
+    }
+    $stmt->close();
+    header('location:user.php?id=' . $_GET['id']);
+}
+
+if (isset($_POST['send']) && !empty($_POST['content'])) {
     $sql = "INSERT INTO `messages` (`idsend`,`idrec`,`content`) VALUES (?,?,?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("iis", $_SESSION['user_id'], $cur_user_id, $message);
+    $stmt->bind_param("iis", $_SESSION['user_id'], $cur_user_id, $_POST['content']);
     if (!$stmt->execute()) {
         $user_error = 'Send message fail';
     }
@@ -59,18 +89,6 @@ $conn->close();
     <script src="/assets/js/bootstrap.bundle.min.js"></script>
     <script src="/assets/js/color-modes.js"></script>
     <style>
-        .chat-box-actions {
-            position: absolute;
-            top: 50%;
-            right: 10px;
-            transform: translateY(-50%);
-            display: none;
-        }
-
-        .w-100:hover .chat-box-actions {
-            display: block;
-        }
-
         .chat-time {
             font-size: 0.8rem;
             color: white;
@@ -149,14 +167,21 @@ $conn->close();
                         <div style="height: 400px; overflow-y: scroll;" id="scrollContainer">
                             <?php
                             while ($message = $result->fetch_assoc()) {
+                                if (isset($_GET['edit']) && (int)$_GET['edit'] === $message['id']) {
+                                    $msg_edit = $message['content'];
+                                }
                                 if ($message['idsend'] == $_SESSION['user_id']) {
                                     echo '<div class="d-flex justify-content-end text-end mb-1"><div class="w-100"><div class="d-flex flex-column align-items-end">';
                                     if (empty($message['content'])) {
                                         echo '<div class="bg-primary text-white-50 p-2 px-3 rounded-2" style="max-width: 70%;"><i>message has deleted</i>';
+                                        echo '<div class="chat-time">';
                                     } else {
                                         echo '<div class="bg-primary text-white p-2 px-3 rounded-2" style="max-width: 70%;">' . $message['content'];
+                                        echo '<div class="chat-time">';
+                                        echo '<a class="chat-time" href="/user.php?id=' . $cur_user_id . '&del=' . $message['id'] . '">(Del)</a> | ';
+                                        echo '<a class="chat-time" href="/user.php?id=' . $cur_user_id . '&edit=' . $message['id'] . '">(Edit)</a> | ';
                                     }
-                                    echo '<div class="chat-time">' . $message['createat'] . ($message['lastupdate'] > $message['createat'] ? ' (edited) ' : ' ') . '</div>';
+                                    echo $message['createat'] . ($message['lastupdate'] > $message['createat'] ? ' (edited) ' : ' ') . '</div>';
                                     echo '</div></div></div></div>';
                                 } else {
                                     echo '<div class="flex-grow-1 mb-1"><div class="w-100"><div class="d-flex flex-column align-items-start">';
@@ -176,10 +201,10 @@ $conn->close();
                             <!-- ... Add more chat boxes here ... -->
                         </div>
                     </div>
-                    <form method="POST" name="send">
+                    <form method="POST" name="<?php echo $send_btn; ?>">
                         <div class="input-group mt-3">
-                            <input type="text" class="form-control" name="content" placeholder="Type your message">
-                            <button class="btn btn-primary" name="send"><i class="bi bi-send-fill"></i></button>
+                            <input type="text" class="form-control" name="content" placeholder="Type your message" <?php echo $send_btn !== 'send' ? 'value="' . $msg_edit . '"' : ''; ?>>
+                            <button class="btn btn-primary" name="<?php echo $send_btn; ?>"><i class="bi bi-send-fill"></i></button>
                         </div>
                     </form>
                 </div>
