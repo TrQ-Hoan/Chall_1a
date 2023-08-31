@@ -7,6 +7,50 @@ if (!isset($_SESSION)) {
 if (!isset($_SESSION['user_name'])) {
     header('location:login.php');
 }
+
+$conn = mysqli_connect($MYSQL_HOST, $MYSQL_USERNAME, $MYSQL_PASSWORD);
+if (!$conn) {
+    die(mysqli_connect_errno() . ':' . mysqli_connect_error());
+}
+mysqli_select_db($conn, $MYSQL_DB);
+
+// Pagination
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$limit = 20;
+$offset = ($page - 1) * $limit;
+
+// Search
+$search = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : "%%";
+$lowsearch = strtolower($search);
+
+$sql = "SELECT `challenges`.*,`users`.`username` AS `teacherusername`,`users`.`fullname` AS `teacherfullname`
+        FROM `challenges` JOIN `users` ON `challenges`.`teacherid` = `users`.`id`
+        WHERE
+            LOWER(`title`) LIKE ? OR
+            LOWER(`hints`) LIKE ? OR 
+            LOWER(`users`.`fullname`) LIKE ? OR 
+            LOWER(`files`) LIKE ?
+        LIMIT $limit OFFSET $offset;";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ssss", $lowsearch, $lowsearch, $lowsearch, $lowsearch);
+$stmt->execute();
+$result = $stmt->get_result();
+
+// Calculate total pages for pagination
+$sql = "SELECT COUNT(*) FROM `challenges` JOIN `users` ON `challenges`.`teacherid` = `users`.`id` WHERE
+            LOWER(`title`) LIKE ? OR
+            LOWER(`hints`) LIKE ? OR 
+            LOWER(`users`.`fullname`) LIKE ? OR 
+            LOWER(`files`) LIKE ?;";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ssss", $lowsearch, $lowsearch, $lowsearch, $lowsearch);
+$stmt->execute();
+$result_1 = $stmt->get_result();
+$total_rows = $result_1->fetch_assoc()['total'];
+$total_pages = ceil($total_rows / $limit);
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -45,12 +89,74 @@ if (!isset($_SESSION['user_name'])) {
                     <form action="/logout.php" class="form-outline me-2 mb-1 mt-1">
                         <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-box-arrow-right"></i></button>
                     </form>
-                    <a href="/account.php?id=<?php echo $_SESSION['user_id'];?>" class="btn btn-sm btn-primary mb-1 mt-1"><i class="bi bi-person-square"></i></a>
+                    <a href="/account.php?id=<?php echo $_SESSION['user_id']; ?>" class="btn btn-sm btn-primary mb-1 mt-1"><i class="bi bi-person-square"></i></a>
                 </ul>
             </div>
         </div>
     </nav>
     <!-- main page -->
+    <div class="container mt-4">
+        <h2>Challenges</h2>
+        <div class="btn-toolbar justify-content-between mt-4 mb-4" role="toolbar">
+            <form class="d-flex" role="search">
+                <div class="input-group">
+                    <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+                    <input class="form-control" type="search" name="search" placeholder="Search..." aria-label="Search" <?php echo isset($search) ? 'value="' . str_replace("%", "", $search) . '"' : '' ?>>
+                </div>
+            </form>
+            <?php if ($_SESSION['user_role'] === 'teacher') {
+                echo '<form action="/contest.php"><button type="submit" class="btn btn-outline-success"><i class="bi bi-plus-lg"></i> Add</button></form>';
+            } ?>
+        </div>
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Teacher</th>
+                    <th>Hint</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        echo '<tr>';
+                        echo '<td>' . $row['title'] . '</td>';
+                        echo '<td>' . $row['teacherfullname'] . ' (' . $row['teacherusername'] . ')' . '</td>';
+                        echo '<td>' . $row['hints'] . '</td>';
+                        echo '<td style="text-align:center; width:100px; white-space:nowrap;">';
+                        if ($_SESSION['user_role'] === 'teacher') {
+                            echo '<a href="/contest.php?id=' . $row['id'] . '" class="btn btn-sm btn-warning me-2"><i class="bi bi-pencil-square"></i></a>';
+                            echo '<a href="/remove.php?tbl=challenge&id=' . $row['id'] . '" class="btn btn-sm btn-danger me-2"><i class="bi bi-trash"></i></a>';
+                        }
+                        echo '<a href="/challenge.php?id=' . $row['id'] . '" class="btn btn-sm btn-info me-2"><i class="bi bi-info-circle"></i></a>';
+                        echo '</td>';
+                        echo '</tr>';
+                    }
+                } else {
+                    echo '<tr><td colspan="6">No records found.</td></tr>';
+                }
+                ?>
+            </tbody>
+        </table>
+        <?php
+        // Previous and Next buttons for pagination
+        $search_param = "";
+        if (isset($search)) {
+            $search = str_replace("%", "", $search);
+        }
+        if ($search !== '') {
+            $search_param = '&search=' . $search;
+        }
+        if ($page > 1) {
+            echo '<a href="?page=' . ($page - 1) . $search_param . '" class="btn btn-primary">Previous</a>';
+        }
+        if ($page < $total_pages) {
+            echo '<a href="?page=' . ($page + 1) . $search_param . '" class="btn btn-primary">Next</a>';
+        }
+        ?>
+    </div>
     <!-- switch theme -->
     <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
         <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center" id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown" aria-label="Toggle theme (light)">

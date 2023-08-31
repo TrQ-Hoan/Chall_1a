@@ -8,58 +8,37 @@ if (!isset($_SESSION['user_name'])) {
     header('location:login.php');
 }
 
-$conn = mysqli_connect($MYSQL_HOST, $MYSQL_USERNAME, $MYSQL_PASSWORD);
-if (!$conn) {
-    die(mysqli_connect_errno() . ':' . mysqli_connect_error());
+if ($_SESSION['user_role'] !== 'teacher') {
+    include("_err403.php");
+    exit();
 }
-mysqli_select_db($conn, $MYSQL_DB);
 
-// Pagination
-$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-$limit = 20;
-$offset = ($page - 1) * $limit;
+$cur_challenge_id = isset($_GET['id']) && ctype_digit($_GET['id']) ? (int)$_GET['id'] : 0;
+$page_stat_cfg = 'create_challenge';
 
-// Search
-$search = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : "%%";
-$lowsearch = strtolower($search);
+if ($cur_challenge_id !== 0) {
+    $sql = "SELECT `challenges`.*,`users`.`username` AS `teacherusername`,`users`.`fullname` AS `teacherfullname`
+    FROM `challenges` JOIN `users` ON `challenges`.`teacherid` = `users`.`id` WHERE `challenges`.`id` = ?;";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $cur_challenge_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $cur_chall_obj = $result->fetch_assoc();
+    if (!isset($cur_chall_obj)) {
+        http_response_code(404);
+        include("_err404.php");
+        exit();
+    }
+    $page_stat_cfg = 'update_challenge';
+}
 
-$sql = "SELECT `assignments`.*,`users`.`username` AS `teacherusername`,`users`.`fullname` AS `teacherfullname`
-        FROM `assignments` JOIN `users` ON `assignments`.`teacherid` = `users`.`id`
-        WHERE
-            LOWER(`title`) LIKE ? OR
-            LOWER(`description`) LIKE ? OR 
-            LOWER(`users`.`fullname`) LIKE ? OR 
-            LOWER(`files`) LIKE ? OR 
-            LOWER(`dueto`) LIKE ?
-        LIMIT $limit OFFSET $offset;";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("sssss", $lowsearch, $lowsearch, $lowsearch, $lowsearch, $lowsearch);
-$stmt->execute();
-$result = $stmt->get_result();
-
-// Calculate total pages for pagination
-$sql = "SELECT COUNT(*) FROM `assignments` JOIN `users` ON `assignments`.`teacherid` = `users`.`id` WHERE
-            LOWER(`title`) LIKE ? OR
-            LOWER(`description`) LIKE ? OR 
-            LOWER(`users`.`fullname`) LIKE ? OR 
-            LOWER(`files`) LIKE ? OR 
-            LOWER(`dueto`) LIKE ?;";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("sssss", $lowsearch, $lowsearch, $lowsearch, $lowsearch, $lowsearch);
-$stmt->execute();
-$result_1 = $stmt->get_result();
-$total_rows = $result_1->fetch_assoc()['total'];
-$total_pages = ceil($total_rows / $limit);
-
-$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html lang='en' data-bs-theme="auto">
 
 <head>
-    <title>QLSV - Assignments</title>
+    <title>QLSV - Challenge</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2aWV3Qm94PSIxMDUuODEgLTE4LjExMSA0OCA0OCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxkZWZzPgogICAgPGZpbHRlciBpZD0iZWRpdGluZy1nbG93aW5nIiB4PSItMTAwJSIgeT0iLTEwMCUiIHdpZHRoPSIzMDAlIiBoZWlnaHQ9IjMwMCUiPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgaW49IlNvdXJjZUdyYXBoaWMiIHJlc3VsdD0iYmx1ciIgc3RkRGV2aWF0aW9uPSI2Ii8+CiAgICAgIDxmZU1lcmdlPgogICAgICAgIDxmZU1lcmdlTm9kZSBpbj0iYmx1ciIvPgogICAgICAgIDxmZU1lcmdlTm9kZSBpbj0iU291cmNlR3JhcGhpYyIvPgogICAgICA8L2ZlTWVyZ2U+CiAgICA8L2ZpbHRlcj4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZWRpdGluZy1nbG93aW5nLWdyYWRpZW50IiB4MT0iMCIgeDI9IjEiIHkxPSIwLjUiIHkyPSIwLjUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM2N2ZmNDMiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjOTBmZmZmIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB4PSI5My42ODMiIHk9Ii0yNC41NjUiIHdpZHRoPSI2OS45NzQiIGhlaWdodD0iNjUuMzcyIiBzdHlsZT0iZmlsbDogcmdiKDM3LCAzNywgMzcpOyIvPgogIDxnIGZpbHRlcj0idXJsKCNlZGl0aW5nLWdsb3dpbmcpIiB0cmFuc2Zvcm09Im1hdHJpeCgxLCAwLCAwLCAxLCAtMTIwLjk5MzU0NTUzMjIyNjU2LCAtNzAuMzY4NDYxNjA4ODg2NzIpIj4KICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIzNi43NzUwMDc3MjQ3NjE5NiwgODcuMTE5OTk5ODg1NTU5MDgpIj4KICAgICAgPHBhdGggZD0iTTIuNjUtMTEuNzZMMi42NS0xMS43NlEyLjY1LTE1LjMzIDUuNTQtMTYuNjZMNS41NC0xNi42Nkw1LjU0LTE2LjY2UTYuOTQtMTcuMzEgOC44Ny0xNy4zMUw4Ljg3LTE3LjMxTDguODctMTcuMzFRMTAuMTMtMTcuMzEgMTEuMzEtMTdMMTEuMzEtMTdMMTEuMzEtMTdRMTIuNDgtMTYuNjkgMTMuMjktMTYuMTJMMTMuMjktMTYuMTJMMTMuMjktMjMuODBMMTUuMjAtMjMuODBMMTUuMjAgMEwxMy4zMyAwLjE3TDEzLjMzIDAuMTdRMTEuMTIgMC40MSA5Ljg2IDAuNDFMOS44NiAwLjQxTDkuODYgMC40MVE4LjYwIDAuNDEgNy41MCAwLjE3TDcuNTAgMC4xN0w3LjUwIDAuMTdRNi4zOS0wLjA3IDUuMzAtMC42MUw1LjMwLTAuNjFMNS4zMC0wLjYxUTQuMDgtMS4yMiAzLjM3LTIuNDFMMy4zNy0yLjQxTDMuMzctMi40MVEyLjY1LTMuNjAgMi42NS01LjM0TDIuNjUtNS4zNEwyLjY1LTExLjc2Wk0xMy4yOS0xNC40NUwxMy4yOS0xNC40NVExMi4zOC0xNC45NiAxMS4xOS0xNS4yOEwxMS4xOS0xNS4yOEwxMS4xOS0xNS4yOFExMC4wMC0xNS42MSA4Ljg0LTE1LjYxTDguODQtMTUuNjFMOC44NC0xNS42MVE2Ljk0LTE1LjYxIDUuNzMtMTQuNjdMNS43My0xNC42N0w1LjczLTE0LjY3UTQuNTItMTMuNzQgNC41Mi0xMS42Nkw0LjUyLTExLjY2TDQuNTItNS4zMEw0LjUyLTUuMzBRNC41Mi0xLjMzIDEwLjAwLTEuMzNMMTAuMDAtMS4zM0wxMC4wMC0xLjMzUTExLjI5LTEuMzMgMTMuMjktMS42M0wxMy4yOS0xLjYzTDEzLjI5LTE0LjQ1Wk0yMS40MiAwLjQ0TDIxLjQyIDAuNDRRMTkuNTItMC4xMCAxOC42Ny0xLjI5TDE4LjY3LTEuMjlMMTguNjctMS4yOVExNy44Mi0yLjQ4IDE3LjgyLTQuNDlMMTcuODItNC40OUwxNy44Mi0yMy44MEwxOS43Mi0yMy44MEwxOS43Mi0xNy4wM0wyMy44MC0xNy4wM0wyMi45OC0xNS4yM0wxOS43Mi0xNS4yM0wxOS43Mi00LjQ5TDE5LjcyLTQuNDlRMTkuNzItMS43NyAyMS45Ni0xLjAyTDIxLjk2LTEuMDJMMjEuNDIgMC40NFoiIGZpbGw9InVybCgjZWRpdGluZy1nbG93aW5nLWdyYWRpZW50KSIvPgogICAgPC9nPgogIDwvZz4KPC9zdmc+#CqQkestbA4">
     <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="/assets/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -78,7 +57,7 @@ $conn->close();
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/assignments.php">Assignments</a>
+                        <a class="nav-link" href="/assignments.php">Assignments</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/challenges.php">Challenges</a>
@@ -97,70 +76,52 @@ $conn->close();
         </div>
     </nav>
     <!-- main page -->
-    <div class="container mt-4">
-        <h2>Assignments</h2>
-        <div class="btn-toolbar justify-content-between mt-4 mb-4" role="toolbar">
-            <form class="d-flex" role="search">
-                <div class="input-group">
-                    <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
-                    <input class="form-control" type="search" name="search" placeholder="Search..." aria-label="Search" <?php echo isset($search) ? 'value="' . str_replace("%", "", $search) . '"' : '' ?>>
+    <section class="w-100 p-4 d-flex justify-content-center pb-4">
+        <div style="width: 26rem;">
+            <h2 class="form-outline mb-4">Challenge information</h2>
+            <form method="POST" name="<?php echo $page_stat_cfg; ?>">
+                <!-- Title input -->
+                <div class="form-floating mb-4">
+                    <input type="text" name="challTitle" class="form-control" placeholder="Title" <?php echo isset($cur_chall_obj) ? 'value="' . $cur_chall_obj['title'] . '"' : ''; ?> />
+                    <label for="floatingInput">Title</label>
                 </div>
+
+                <?php if ($page_stat_cfg === 'update_user') {
+                    echo '<!-- Teacher username -->';
+                    echo '<div class="form-floating mb-4">';
+                    echo '<input type="text" class="form-control" placeholder="Teacher Username" value="' . $cur_chall_obj['teacherfullname'] . '" readonly/>';
+                    echo '<label for="floatingInput">Teacher Username</label></div>';
+                } ?>
+
+                <!-- Hints input -->
+                <div class="form-floating mb-4 h-100">
+                    <textarea type="text" name="challHint" class="form-control" placeholder="Hints" style="min-height:100px;"><?php echo isset($cur_chall_obj) ? $cur_chall_obj['hints'] : ''; ?></textarea>
+                    <label for="floatingInput">Hints</label>
+                </div>
+
+                <!-- Files upload -->
+                <div class="form-floating mb-4">
+                    <input type="text" name="challFiles" class="form-control" placeholder="File" <?php echo isset($cur_chall_obj) ? 'value="' . $cur_chall_obj['files'] . '"' : ''; ?> />
+                    <label for="floatingInput">File</label>
+                </div>
+
+                <!-- Button upload file -->
+                <div class="form-floating mb-4">
+                    <input type="password" name="accountPassword" class="form-control" placeholder="Password" />
+                    <label for="floatingInput">Upload file</label>
+                </div>
+
+                <div class="text-center">
+                    <a style="color:red"><?php echo $account_error; ?></a>
+                </div>
+
+                <!-- Submit button -->
+                <button type="submit" class="btn btn-primary btn-block mb-3" name="<?php echo $page_stat_cfg; ?>" <?php echo isset($cur_chall_obj) ? 'value="' . $cur_chall_obj['username'] . '"' : ''; ?>>
+                    <?php echo isset($cur_chall_obj) ? 'Save' : 'Create'; ?>
+                </button>
             </form>
-            <?php if ($_SESSION['user_role'] === 'teacher') {
-                echo '<form action="/exercise.php"><button type="submit" class="btn btn-outline-success"><i class="bi bi-plus-lg"></i> Add</button></form>';
-            } ?>
         </div>
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Teacher</th>
-                    <th>Description</th>
-                    <th>Due date</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        echo '<tr>';
-                        echo '<td>' . $row['title'] . '</td>';
-                        echo '<td>' . $row['teacherfullname'] . ' (' . $row['teacherusername'] . ')' . '</td>';
-                        echo '<td>' . $row['description'] . '</td>';
-                        echo '<td>' . $row['dueto'] . '</td>';
-                        echo '<td style="text-align:center; width:100px; white-space:nowrap;">';
-                        if ($_SESSION['user_role'] === 'teacher') {
-                            echo '<a href="/exercise.php?id=' . $row['id'] . '" class="btn btn-sm btn-warning me-2"><i class="bi bi-pencil-square"></i></a>';
-                            echo '<a href="/remove.php?tbl=assignment&id=' . $row['id'] . '" class="btn btn-sm btn-danger me-2"><i class="bi bi-trash"></i></a>';
-                        }
-                        echo '<a href="/assignment.php?id=' . $row['id'] . '" class="btn btn-sm btn-info me-2"><i class="bi bi-info-circle"></i></a>';
-                        echo '</td>';
-                        echo '</tr>';
-                    }
-                } else {
-                    echo '<tr><td colspan="6">No records found.</td></tr>';
-                }
-                ?>
-            </tbody>
-        </table>
-        <?php
-        // Previous and Next buttons for pagination
-        $search_param = "";
-        if (isset($search)) {
-            $search = str_replace("%", "", $search);
-        }
-        if ($search !== '') {
-            $search_param = '&search=' . $search;
-        }
-        if ($page > 1) {
-            echo '<a href="?page=' . ($page - 1) . $search_param . '" class="btn btn-primary">Previous</a>';
-        }
-        if ($page < $total_pages) {
-            echo '<a href="?page=' . ($page + 1) . $search_param . '" class="btn btn-primary">Next</a>';
-        }
-        ?>
-    </div>
+    </section>
     <!-- switch theme -->
     <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
         <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center" id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown" aria-label="Toggle theme (light)">
