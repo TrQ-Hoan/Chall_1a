@@ -16,6 +16,9 @@ git clone https://github.com/TrQ-Hoan/Chall_1a.git
 sudo chmod 775 ~ ~/Chall_1a
 sudo chmod -R 775 ~/Chall_1a/source
 sudo chown -R www-data:www-data ~/Chall_1a
+sudo chmod -R 777 ~/Chall_1a/source/archive/
+# sudo chmod -R 775 ~/Chall_1a/source/archive/
+# sudo chown -R www-data:www-data ~/Chall_1a/source/archive/
 
 # link source code directory to apache default directory
 sudo ln -s ~/Chall_1a/source /var/www/html/chall01

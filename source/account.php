@@ -28,12 +28,7 @@ function create_user($username, $password, $full_name, $email, $phone)
     $sql = "INSERT INTO `users` (`username`, `password`, `fullname`, `email`, `phone`, `role`) VALUES (?, ?, ?, ?, ?, 'student')";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sssss", $username, $password, $full_name, $email, $phone);
-
-    if ($stmt->execute()) {
-        return true;
-    } else {
-        return false;
-    }
+    return $stmt->execute();
 }
 
 function update_user($username, $email, $phone, $password)
@@ -42,13 +37,12 @@ function update_user($username, $email, $phone, $password)
 
     $sql = "UPDATE `users` SET `email` = ?, `phone` = ?" . (empty($password) ? "" : " `password = ?`") . " WHERE `username` = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssss", $email, $phone, $password, $username);
-
-    if ($stmt->execute()) {
-        return true;
+    if (empty($password)) {
+        $stmt->bind_param("sss", $email, $phone, $username);
     } else {
-        return false;
+        $stmt->bind_param("ssss", $email, $phone, $password, $username);
     }
+    return $stmt->execute();
 }
 
 if ($_SESSION['user_role'] !== 'teacher' && $_SESSION['user_id'] !== $cur_user_id) {
@@ -78,13 +72,12 @@ if (isset($_POST['create_user'])) {
         $account_error = 'Password not match!';
     }
 
-    // if (create_user($username, $password, $full_name, $email, $phone)) {
-    //     // Thành công, thực hiện hành động sau khi tạo user
-    // } else {
-    //     // Lỗi, xử lý thông báo lỗi
-    // }
+    if (!create_user($username, $password, $full_name, $email, $phone)) {
+        $account_error - 'Create new user error!';
+    } else {
+        header('location:users.php');
+    }
 }
-
 
 if (isset($_POST['update_user'])) {
     $email = $_POST['accountEmail'];
@@ -100,20 +93,11 @@ if (isset($_POST['update_user'])) {
         $account_error = 'Password not match';
     }
 
-    $ret1 = $_POST['update_user'] . ' ' . $email . ' ' . $phone . ' ' . (empty($password) ? htmlspecialchars('<null>') : '"' . $password . '"');
-    $sql = "UPDATE `users` SET `email` = ?, `phone` = ?" . (empty($password) ? "" : " `password = ?`") . " WHERE `username` = ?";
-    // $ret1 = $_POST['update_user'] . ' ' . $email . ' ' . $phone . ' "' . $password . '"';
-    echo '<pre>';
-    print_r($ret1);
-    echo '<br/>';
-    print_r($sql);
-    echo '</pre>';
-
-    // if (update_user($_POST['update_user'], $email, $phone, $password)) {
-    //     // Thành công, thực hiện hành động sau khi cập nhật thông tin
-    // } else {
-    //     // Lỗi, xử lý thông báo lỗi
-    // }
+    if (!update_user($_POST['update_user'], $email, $phone, $password)) {
+        $account_error - 'Create new user error!';
+    } else {
+        header('location:users.php');
+    }
 }
 
 if ($cur_user_id !== 0) {
