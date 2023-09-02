@@ -176,7 +176,7 @@ $conn->close();
                                         echo '<div class="bg-primary text-white-50 p-2 px-3 rounded-2" style="max-width: 70%;"><i>message has deleted</i>';
                                         echo '<div class="chat-time">';
                                     } else {
-                                        echo '<div class="bg-primary text-white p-2 px-3 rounded-2" style="max-width: 70%;">' . $message['content'];
+                                        echo '<div class="bg-primary text-white p-2 px-3 rounded-2" style="max-width: 70%;">' . htmlspecialchars($message['content']);
                                         echo '<div class="chat-time">';
                                         echo '<a class="chat-time" href="/user.php?id=' . $cur_user_id . '&del=' . $message['id'] . '">(Del)</a> | ';
                                         echo '<a class="chat-time" href="/user.php?id=' . $cur_user_id . '&edit=' . $message['id'] . '">(Edit)</a> | ';
@@ -188,7 +188,7 @@ $conn->close();
                                     if (empty($message['content'])) {
                                         echo '<div class="bg-secondary text-black-50 border text-secondary p-2 px-3 rounded-2" style="max-width: 70%;"><i>message has deleted</i>';
                                     } else {
-                                        echo '<div class="bg-secondary text-white border text-secondary p-2 px-3 rounded-2" style="max-width: 70%;">' . $message['content'];
+                                        echo '<div class="bg-secondary text-white border text-secondary p-2 px-3 rounded-2" style="max-width: 70%;">' . htmlspecialchars($message['content']);
                                     }
                                     echo '<div class="chat-time">' . $message['createat'] . ($message['lastupdate'] > $message['createat'] ? ' (edited) ' : ' ') . '</div>';
                                     echo '</div></div></div></div>';
