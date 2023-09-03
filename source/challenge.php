@@ -8,39 +8,8 @@ if (!isset($_SESSION['user_name'])) {
     header('location:login.php');
 }
 
-if ($_SESSION['user_role'] !== 'teacher') {
-    include("_err403.php");
-    exit();
-}
-
-function uploadFile(array $mfile, $fileDest)
-{
-    $fileName = $mfile['name'];
-    $fileTmpName = $mfile['tmp_name'];
-    $fileSize = $mfile['size'];
-    $fileError = $mfile['error'];
-    $fileType = $mfile['type'];
-    $fileDestination = $_SERVER['DOCUMENT_ROOT'] . $fileDest;
-    $fileActualExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-    $allowed = array('txt');
-    if (!in_array($fileActualExt, $allowed)) {
-        echo "<script>alert('File type not allowed: " . $fileActualExt . "');</script>";
-        return false;
-    }
-    if ($fileError !== 0) {
-        echo "<script>alert('File upload failed');</script>";
-        return false;
-    }
-    if ($fileSize > 2097152) {
-        echo "<script>alert('File size too large');</script>";
-        return false;
-    }
-    move_uploaded_file($fileTmpName, $fileDestination);
-    return true;
-}
-
 $cur_challenge_id = isset($_GET['id']) && ctype_digit($_GET['id']) ? (int)$_GET['id'] : 0;
-$page_stat_cfg = 'create_challenge';
+
 
 if ($cur_challenge_id !== 0) {
     $sql = "SELECT `challenges`.*,`users`.`username` AS `teacherusername`,`users`.`fullname` AS `teacherfullname`
@@ -55,47 +24,9 @@ if ($cur_challenge_id !== 0) {
         include("_err404.php");
         exit();
     }
-    $page_stat_cfg = 'update_challenge';
+    $chall_file_path = $_SERVER['DOCUMENT_ROOT'] . $cur_chall_obj['files'];
+    $chall_file_name = pathinfo($cur_chall_obj['files'], PATHINFO_FILENAME);
 }
-
-if (isset($_POST['create_challenge'])) {
-    $mfile = $_FILES['challFile'];
-    $fileDestination = '/archive/challenges/' . $mfile['name'];
-    $ret_upload = uploadFile($mfile, $fileDestination);
-    if (!$ret_upload || empty($_POST['challTitle']) || empty($_POST['challHint'])) {
-        // http_response_code(500);
-        die("Request wrong or upload faild");
-    }
-    $sql = "INSERT INTO `challenges` (`teacherid`, `title`, `files`, `hints`)
-    VALUES (?, ?, ?, ?);";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("isss", $_SESSION['user_id'], $_POST['challTitle'], $fileDestination, $_POST['challHint']);
-    $stmt->execute();
-    header('location:challenges.php');
-}
-
-if (isset($_POST['update_challenge'])) {
-    $chall_id = (int)$_POST['update_challenge'];
-    $mfile = $_FILES['challFile'];
-    if (!empty($_POST['challFile'])) {
-        $fileDestination = '/archive/challenges/' . $mfile['name'];
-        $ret_upload = uploadFile($mfile, $fileDestination);
-        if (!$ret_upload || empty($_POST['challTitle']) || empty($_POST['challHint'])) {
-            // http_response_code(500);
-            die("Request wrong or upload faild");
-        }
-        $sql = "UPDATE `challenges` SET `teacherid` = ?, `title` = ?, `files` = ?, `hints` = ? WHERE `id` = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("isssi", $_SESSION['user_id'], $_POST['challTitle'], $fileDestination, $_POST['challHint'], $chall_id);
-    } else {
-        $sql = "UPDATE `challenges` SET `teacherid` = ?, `title` = ?, `hints` = ? WHERE `id` = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("issi", $_SESSION['user_id'], $_POST['challTitle'], $_POST['challHint'], $chall_id);
-    }
-    $stmt->execute();
-    header('location:challenges.php');
-}
-
 ?>
 
 <!DOCTYPE html>
@@ -142,49 +73,33 @@ if (isset($_POST['update_challenge'])) {
     <!-- main page -->
     <section class="w-100 p-4 d-flex justify-content-center pb-4">
         <div style="width: 26rem;">
-            <h2 class="form-outline mb-4">Challenge information</h2>
-            <form method="POST" enctype="multipart/form-data" name="<?php echo $page_stat_cfg; ?>">
-                <!-- Title input -->
-                <div class="form-floating mb-4">
-                    <input type="text" name="challTitle" class="form-control" placeholder="Title" <?php echo isset($cur_chall_obj) ? 'value="' . $cur_chall_obj['title'] . '"' : ''; ?> />
-                    <label for="floatingInput">Title</label>
+            <h2 class="form-outline mb-4">Challenge</h2>
+            <form method="POST">
+                <!-- Title -->
+                <div class="small text-secondary"><sub>Title</sub></div>
+                <b><?php echo $cur_chall_obj['title']; ?></b>
+                <!-- Teacher -->
+                <div class="small text-secondary"><sub>Teacher</sub></div>
+                <b><?php echo $cur_chall_obj['teacherfullname']; ?></b>
+                <!-- Hints -->
+                <div class="small text-secondary"><sub>Hints</sub></div>
+                <b><?php echo $cur_chall_obj['hints']; ?></b>
+                <!-- Error message -->
+                <div class="text-center"><a style="color:red"><?php echo $user_error; ?></a></div>
+
+                <div class="input-group mt-2">
+                    <input type="text" class="form-control" name="submit_chall" placeholder="Type your answer" <?php echo isset($_POST['submit_chall']) ? 'value="' . $_POST['submit_chall'] . '"' : ''; ?>>
+                    <button class="btn btn-outline-primary" name="submit_btn"><i class="bi bi-send-fill"></i></button>
                 </div>
-
-                <?php if ($page_stat_cfg === 'update_challenge') { ?>
-                    <!-- Teacher username -->
-                    <div class="form-floating mb-4">
-                        <input type="text" class="form-control" placeholder="Teacher Username" <?php echo isset($cur_chall_obj) ? 'value="' . $cur_chall_obj['teacherfullname'] . '"' : ''; ?> readonly />
-                        <label for="floatingInput">Teacher Username</label>
-                    </div>
-                <?php } ?>
-
-                <!-- Hints input -->
-                <div class="form-floating mb-4 h-100">
-                    <textarea type="text" name="challHint" class="form-control" placeholder="Hints" style="min-height:100px;"><?php echo isset($cur_chall_obj) ? $cur_chall_obj['hints'] : ''; ?></textarea>
-                    <label for="floatingInput">Hints</label>
-                </div>
-
-                <?php if ($page_stat_cfg === 'update_challenge') { ?>
-                    <!-- Files upload -->
-                    <div class="form-floating mb-4">
-                        <input type="text" class="form-control" placeholder="File" <?php echo isset($cur_chall_obj) ? 'value="' . $cur_chall_obj['files'] . '"' : ''; ?> readonly />
-                        <label for="floatingInput">File</label>
-                    </div>
-                <?php } ?>
-
-                <!-- Button upload file -->
-                <div class="mb-4">
-                    <input class="form-control" type="file" name="challFile">
-                </div>
-
-                <div class="text-center">
-                    <a style="color:red"><?php echo $account_error; ?></a>
-                </div>
-
-                <!-- Submit button -->
-                <button type="submit" class="btn btn-primary btn-block mb-3" name="<?php echo $page_stat_cfg; ?>" <?php echo isset($cur_chall_obj) ? 'value="' . $cur_chall_obj['id'] . '"' : ''; ?>>
-                    <?php echo isset($cur_chall_obj) ? 'Save' : 'Create'; ?>
-                </button>
+                <?php if (isset($_POST['submit_chall']) && !empty($_POST['submit_chall'])) {
+                    if ($_POST['submit_chall'] === $chall_file_name) { ?>
+                        <div class="text-center mt-2"><a style="color:green">Correct !</a></div>
+                        <div class="small text-secondary"><sub>Answer detail</sub></div>
+                        <div><?php echo file_get_contents($chall_file_path); ?></div>
+                    <?php } else { ?>
+                        <div class="text-center mt-2"><a style="color:red">Incorrect !</a></div>
+                <?php    }
+                } ?>
             </form>
         </div>
     </section>

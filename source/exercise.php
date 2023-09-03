@@ -145,12 +145,13 @@ if (isset($_POST['update_assignment'])) {
                     <label for="floatingInput">Title</label>
                 </div>
 
-                <?php if ($page_stat_cfg === 'update_assignment') {
-                    echo '<!-- Teacher username -->';
-                    echo '<div class="form-floating mb-4">';
-                    echo '<input type="text" class="form-control" placeholder="Teacher Username" value="' . $cur_assignment_obj['teacherfullname'] . '" readonly/>';
-                    echo '<label for="floatingInput">Teacher Username</label></div>';
-                } ?>
+                <?php if ($page_stat_cfg === 'update_assignment') { ?>
+                    <!-- Teacher username -->
+                    <div class="form-floating mb-4">
+                        <input type="text" class="form-control" placeholder="Teacher Username" <?php echo isset($cur_assignment_obj) ? 'value="' . $cur_assignment_obj['teacherfullname'] . '"' : ''; ?> readonly />
+                        <label for="floatingInput">Teacher Username</label>
+                    </div>
+                <?php } ?>
 
                 <!-- Description input -->
                 <div class="form-floating mb-4 h-100">
@@ -164,12 +165,13 @@ if (isset($_POST['update_assignment'])) {
                     <label for="floatingInput">Duedate</label>
                 </div>
 
-                <?php if ($page_stat_cfg === 'update_assignment') {
-                echo '<!-- Files upload -->';
-                echo '<div class="form-floating mb-4">';
-                echo '<input type="text" class="form-control" placeholder="File" value="' . $cur_assignment_obj['files'] . '" readonly/>';
-                echo '<label for="floatingInput">File</label></div>';
-                } ?>
+                <?php if ($page_stat_cfg === 'update_assignment') { ?>
+                    <!-- Files upload -->
+                    <div class="form-floating mb-4">
+                        <input type="text" class="form-control" placeholder="File" <?php echo isset($cur_assignment_obj) ? 'value="' . $cur_assignment_obj['files'] . '"' : ''; ?> readonly />
+                        <label for="floatingInput">File</label>
+                    </div>
+                <?php } ?>
 
                 <!-- Button upload file -->
                 <div class="mb-4">
