@@ -59,7 +59,7 @@ switch ($get_tbl) {
         exit();
 }
 
-$sql = "SELECT *  FROM {$tbl_name} WHERE `id` = ?;";
+$sql = "SELECT * FROM {$tbl_name} WHERE `id` = ?;";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $file_id);
 $stmt->execute();
