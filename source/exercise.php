@@ -124,7 +124,7 @@ if (isset($_POST['update_assignment'])) {
                         <a class="nav-link" href="/assignments.php">Assignments</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/assignments.php">Assignments</a>
+                        <a class="nav-link" href="/challenges.php">Challenges</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/users.php">Users</a>

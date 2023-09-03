@@ -61,28 +61,32 @@ function downloadFile($filePath, $fileName)
 
 $cur_assignment_id = isset($_GET['id']) && ctype_digit($_GET['id']) ? (int)$_GET['id'] : 0;
 
-if ($cur_assignment_id !== 0) {
-    $sql = "SELECT `assignments`.*,`users`.`username` AS `teacherusername`,`users`.`fullname` AS `teacherfullname`
-    FROM `assignments` JOIN `users` ON `assignments`.`teacherid` = `users`.`id` WHERE `assignments`.`id` = ?;";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $cur_assignment_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $cur_assignment_obj = $result->fetch_assoc();
-    if (!isset($cur_assignment_obj)) {
-        http_response_code(404);
-        include("_err404.php");
-        exit();
-    }
-    $filePath = $_SERVER['DOCUMENT_ROOT'] . $cur_assignment_obj['files'];
-
-    $sql = "SELECT * FROM `submits` WHERE `assignmentid` = ? AND `usersubmitid` = ?;";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $cur_assignment_id, $_SESSION['user_id']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $submit_info = $result->fetch_assoc();
+if ($cur_assignment_id === 0) {
+    http_response_code(404);
+    include("_err404.php");
+    exit();
 }
+
+$sql = "SELECT `assignments`.*,`users`.`username` AS `teacherusername`,`users`.`fullname` AS `teacherfullname`
+    FROM `assignments` JOIN `users` ON `assignments`.`teacherid` = `users`.`id` WHERE `assignments`.`id` = ?;";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $cur_assignment_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$cur_assignment_obj = $result->fetch_assoc();
+if (!isset($cur_assignment_obj)) {
+    http_response_code(404);
+    include("_err404.php");
+    exit();
+}
+$filePath = $_SERVER['DOCUMENT_ROOT'] . $cur_assignment_obj['files'];
+
+$sql = "SELECT * FROM `submits` WHERE `assignmentid` = ? AND `usersubmitid` = ?;";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ii", $cur_assignment_id, $_SESSION['user_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+$submit_info = $result->fetch_assoc();
 
 if (isset($_POST['submit'])) {
     $mfile = $_FILES['submitFile'];
@@ -107,43 +111,6 @@ if (isset($_POST['download']) && $_POST['download'] === 'Download') {
     $fileName = basename($filePath);
     downloadFile($filePath, $fileName);
 }
-
-$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-$limit = 20;
-$offset = ($page - 1) * $limit;
-
-$search = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : "%%";
-$lowsearch = strtolower($search);
-
-$sql = "SELECT `submits`.*, `users`.`username` AS `username`, `users`.`fullname` AS `userfullname` 
-FROM `submits` JOIN `users` ON `submits`.`usersubmitid` = `users`.`id` 
-WHERE `assignmentid` = ? AND (
-            LOWER(`users`.`username`) LIKE ? OR 
-            LOWER(`users`.`fullname`) LIKE ? OR 
-            LOWER(`ogfilename`) LIKE ? OR 
-            LOWER(`files`) LIKE ? OR 
-            LOWER(`lastupdate`) LIKE ?
-        ) LIMIT $limit OFFSET $offset;";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("isssss", $cur_assignment_id, $lowsearch, $lowsearch, $lowsearch, $lowsearch, $lowsearch);
-$stmt->execute();
-$tbl_exercise = $stmt->get_result();
-
-// Calculate total pages for pagination
-$sql = "SELECT COUNT(*) AS total FROM `submits` JOIN `users` ON `submits`.`usersubmitid` = `users`.`id`
-WHERE `assignmentid` = ? AND (
-            LOWER(`users`.`username`) LIKE ? OR 
-            LOWER(`users`.`fullname`) LIKE ? OR 
-            LOWER(`ogfilename`) LIKE ? OR 
-            LOWER(`files`) LIKE ? OR 
-            LOWER(`lastupdate`) LIKE ?);";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("isssss", $cur_assignment_id, $lowsearch, $lowsearch, $lowsearch, $lowsearch, $lowsearch);
-$stmt->execute();
-$result_1 = $stmt->get_result();
-$total_rows = $result_1->fetch_assoc()['total'];
-$total_pages = ceil($total_rows / $limit);
 ?>
 
 <!DOCTYPE html>
@@ -233,6 +200,44 @@ $total_pages = ceil($total_rows / $limit);
     <?php } elseif ($_SESSION['user_role'] === 'teacher') { ?>
         <div class="container mt-2">
             <h2 class="mb-4">Assignment</h2>
+            <?php
+            $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+            $limit = 20;
+            $offset = ($page - 1) * $limit;
+
+            $search = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : "%%";
+            $lowsearch = strtolower($search);
+
+            $sql = "SELECT `submits`.*, `users`.`username` AS `username`, `users`.`fullname` AS `userfullname` 
+            FROM `submits` JOIN `users` ON `submits`.`usersubmitid` = `users`.`id` 
+            WHERE `assignmentid` = ? AND (
+                        LOWER(`users`.`username`) LIKE ? OR 
+                        LOWER(`users`.`fullname`) LIKE ? OR 
+                        LOWER(`ogfilename`) LIKE ? OR 
+                        LOWER(`files`) LIKE ? OR 
+                        LOWER(`lastupdate`) LIKE ?
+                    ) LIMIT $limit OFFSET $offset;";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("isssss", $cur_assignment_id, $lowsearch, $lowsearch, $lowsearch, $lowsearch, $lowsearch);
+            $stmt->execute();
+            $tbl_exercise = $stmt->get_result();
+
+            // Calculate total pages for pagination
+            $sql = "SELECT COUNT(*) AS total FROM `submits` JOIN `users` ON `submits`.`usersubmitid` = `users`.`id`
+            WHERE `assignmentid` = ? AND (
+                        LOWER(`users`.`username`) LIKE ? OR 
+                        LOWER(`users`.`fullname`) LIKE ? OR 
+                        LOWER(`ogfilename`) LIKE ? OR 
+                        LOWER(`files`) LIKE ? OR 
+                        LOWER(`lastupdate`) LIKE ?);";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("isssss", $cur_assignment_id, $lowsearch, $lowsearch, $lowsearch, $lowsearch, $lowsearch);
+            $stmt->execute();
+            $result_1 = $stmt->get_result();
+            $total_rows = $result_1->fetch_assoc()['total'];
+            $total_pages = ceil($total_rows / $limit);
+            ?>
             <section class="container">
                 <div class="row">
                     <div class="col-md-2">

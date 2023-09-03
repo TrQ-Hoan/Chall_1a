@@ -11,22 +11,26 @@ if (!isset($_SESSION['user_name'])) {
 $cur_challenge_id = isset($_GET['id']) && ctype_digit($_GET['id']) ? (int)$_GET['id'] : 0;
 
 
-if ($cur_challenge_id !== 0) {
-    $sql = "SELECT `challenges`.*,`users`.`username` AS `teacherusername`,`users`.`fullname` AS `teacherfullname`
-    FROM `challenges` JOIN `users` ON `challenges`.`teacherid` = `users`.`id` WHERE `challenges`.`id` = ?;";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $cur_challenge_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $cur_chall_obj = $result->fetch_assoc();
-    if (!isset($cur_chall_obj)) {
-        http_response_code(404);
-        include("_err404.php");
-        exit();
-    }
-    $chall_file_path = $_SERVER['DOCUMENT_ROOT'] . $cur_chall_obj['files'];
-    $chall_file_name = pathinfo($cur_chall_obj['files'], PATHINFO_FILENAME);
+if ($cur_challenge_id === 0) {
+    http_response_code(404);
+    include("_err404.php");
+    exit();
 }
+
+$sql = "SELECT `challenges`.*,`users`.`username` AS `teacherusername`,`users`.`fullname` AS `teacherfullname`
+FROM `challenges` JOIN `users` ON `challenges`.`teacherid` = `users`.`id` WHERE `challenges`.`id` = ?;";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $cur_challenge_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$cur_chall_obj = $result->fetch_assoc();
+if (!isset($cur_chall_obj)) {
+    http_response_code(404);
+    include("_err404.php");
+    exit();
+}
+$chall_file_path = $_SERVER['DOCUMENT_ROOT'] . $cur_chall_obj['files'];
+$chall_file_name = pathinfo($cur_chall_obj['files'], PATHINFO_FILENAME);
 ?>
 
 <!DOCTYPE html>
