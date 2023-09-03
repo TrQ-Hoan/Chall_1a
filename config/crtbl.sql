@@ -1,6 +1,7 @@
 ALTER TABLE `assignments` DROP FOREIGN KEY fk_teacher_assignment;
 ALTER TABLE `submits` DROP FOREIGN KEY fk_assignment;
 ALTER TABLE `submits` DROP FOREIGN KEY fk_student_submit;
+ALTER TABLE `submits` DROP FOREIGN KEY fk_user_submit;
 ALTER TABLE `challenges` DROP FOREIGN KEY fk_teacher_challenge;
 ALTER TABLE `messages` DROP FOREIGN KEY fk_sender;
 ALTER TABLE `messages` DROP FOREIGN KEY fk_receiver;
@@ -33,15 +34,15 @@ ALTER TABLE `assignments` ADD CONSTRAINT fk_teacher_assignment FOREIGN KEY (`tea
 CREATE TABLE IF NOT EXISTS `submits` (
     `id` INT PRIMARY KEY AUTO_INCREMENT,
     `assignmentid` INT NOT NULL COMMENT 'ID của assignment',
-    `studentid` INT NOT NULL COMMENT 'ID học sinh submit',
-    `title` VARCHAR(256) NOT NULL COMMENT 'Tên đề bài',
+    `usersubmitid` INT NOT NULL COMMENT 'ID học sinh submit',
+    `ogfilename` TEXT NOT NULL COMMENT 'Tên file submit',
     `files` TEXT NOT NULL COMMENT 'Đường dẫn file submit',
     `lastupdate` DATETIME NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Thời gian chỉnh sửa cuối cùng',
     `createat` DATETIME NOT NULL DEFAULT current_timestamp() COMMENT 'Thời gian submit'
 );
 
 ALTER TABLE `submits` ADD CONSTRAINT fk_assignment FOREIGN KEY (`assignmentid`) REFERENCES `assignments`(`id`);
-ALTER TABLE `submits` ADD CONSTRAINT fk_student_submit FOREIGN KEY (`studentid`) REFERENCES `users`(`id`);
+ALTER TABLE `submits` ADD CONSTRAINT fk_user_submit FOREIGN KEY (`usersubmitid`) REFERENCES `users`(`id`);
 
 CREATE TABLE IF NOT EXISTS `challenges` (
     `id` INT PRIMARY KEY AUTO_INCREMENT,
