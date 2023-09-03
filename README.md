@@ -16,6 +16,8 @@ git clone https://github.com/TrQ-Hoan/Chall_1a.git
 sudo chmod 775 ~ ~/Chall_1a
 sudo chmod -R 775 ~/Chall_1a/source
 sudo chown -R www-data:www-data ~/Chall_1a
+
+mkdir -p ~/Chall_1a/source/archive/assignments ~/Chall_1a/source/archive/challenges ~/Chall_1a/source/archive/submits
 sudo chmod -R 777 ~/Chall_1a/source/archive/
 # sudo chmod -R 775 ~/Chall_1a/source/archive/
 # sudo chown -R www-data:www-data ~/Chall_1a/source/archive/

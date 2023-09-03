@@ -77,7 +77,7 @@ if (isset($_POST['create_challenge'])) {
 if (isset($_POST['update_challenge'])) {
     $chall_id = (int)$_POST['update_challenge'];
     $mfile = $_FILES['challFile'];
-    if (!empty($_POST['challFile'])) {
+    if (isset($mfile['name'])) {
         $fileDestination = '/archive/challenges/' . $mfile['name'];
         $ret_upload = uploadFile($mfile, $fileDestination);
         if (!$ret_upload || empty($_POST['challTitle']) || empty($_POST['challHint'])) {
@@ -178,7 +178,7 @@ if (isset($_POST['update_challenge'])) {
                 </div>
 
                 <div class="text-center">
-                    <a style="color:red"><?php echo $account_error; ?></a>
+                    <a style="color:red"><?php echo $challenge_error; ?></a>
                 </div>
 
                 <!-- Submit button -->

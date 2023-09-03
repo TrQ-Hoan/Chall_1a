@@ -8,6 +8,11 @@ if (!isset($_SESSION['user_name'])) {
     header('location:login.php');
 }
 
+if ($_SESSION['user_role'] !== 'teacher') {
+    include("_err403.php");
+    exit();
+}
+
 function uploadFile(array $mfile, $fileDest)
 {
     $fileName = $mfile['name'];
@@ -72,7 +77,7 @@ if (isset($_POST['create_assignment'])) {
 if (isset($_POST['update_assignment'])) {
     $chall_id = (int)$_POST['update_assignment'];
     $mfile = $_FILES['assignmentFile'];
-    if (!empty($_POST['assignmentFile'])) {
+    if (isset($mfile['name'])) {
         $fileDestination = '/archive/assignments/' . $mfile['name'];
         $ret_upload = uploadFile($mfile, $fileDestination);
         if (!$ret_upload || empty($_POST['assignmentTitle']) || empty($_POST['assignmentDescription'])) {

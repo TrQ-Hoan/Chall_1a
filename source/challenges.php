@@ -38,7 +38,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 // Calculate total pages for pagination
-$sql = "SELECT COUNT(*) FROM `challenges` JOIN `users` ON `challenges`.`teacherid` = `users`.`id` WHERE
+$sql = "SELECT COUNT(*) AS total FROM `challenges` JOIN `users` ON `challenges`.`teacherid` = `users`.`id` WHERE
             LOWER(`title`) LIKE ? OR
             LOWER(`hints`) LIKE ? OR 
             LOWER(`users`.`fullname`) LIKE ? OR 
