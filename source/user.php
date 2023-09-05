@@ -147,8 +147,10 @@ $conn->close();
                         <!-- Phone number -->
                         <div class="small text-secondary"><sub>Phone</sub><b></div>
                         <?php echo $cur_user_obj['phone']; ?> </b>
-                        <!-- Error message -->
-                        <div class="text-center"><a style="color:red"><?php echo $user_error; ?></a></div>
+                        <?php if (isset($user_error) && !empty($user_error)) { ?>
+                            <!-- Error message -->
+                            <div class="text-center"><a style="color:red"><?php echo $user_error; ?></a></div>
+                        <?php } ?>
                     </form>
                 </div>
                 <div class="col-md-8">

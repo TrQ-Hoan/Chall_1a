@@ -216,11 +216,11 @@ $conn->close();
                     <input type="password" name="accountRepeatPassword" class="form-control" placeholder="Repeat password" />
                     <label for="floatingInput">Repeat password</label>
                 </div>
-
-                <div class="text-center">
-                    <a style="color:red"><?php echo $account_error; ?></a>
-                </div>
-
+                <?php if (isset($account_error) && !empty($account_error)) { ?>
+                    <div class="text-center">
+                        <a style="color:red"><?php echo $account_error; ?></a>
+                    </div>
+                <?php } ?>
                 <!-- Submit button -->
                 <button type="submit" class="btn btn-primary btn-block mb-3" name="<?php echo $page_stat_cfg; ?>" <?php echo isset($cur_user_obj) ? 'value="' . $cur_user_obj['username'] . '"' : ''; ?>>
                     <?php echo isset($cur_user_obj) ? 'Save' : 'Create'; ?>

@@ -77,9 +77,12 @@ if (isset($_POST['login'])) {
                     <label for="floatingInput">Password</label>
                 </div>
 
-                <div class="text-center">
-                    <a style="color:red"><?php echo $login_error; ?></a>
-                </div>
+                <?php if (isset($login_error) && !empty($login_error)) { ?>
+                    <div class="text-center">
+                        <a style="color:red"><?php echo $login_error; ?></a>
+                    </div>
+                <?php } ?>
+
                 <div class="text-center form-outline mb-4">
                     <!-- Simple link -->
                     <a href="#!">Forgot password?</a>

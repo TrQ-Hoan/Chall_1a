@@ -155,7 +155,7 @@ if (isset($_POST['download']) && $_POST['download'] === 'Download') {
         </div>
     </nav>
     <!-- main page -->
-    <?php if ($_GET['view'] === 'stu' || $_SESSION['user_role'] === 'student') { ?>
+    <?php if ((isset($_GET['view']) && $_GET['view'] === 'stu') || $_SESSION['user_role'] === 'student') { ?>
         <section class="w-100 p-4 d-flex justify-content-center pb-4">
             <div style="width: 26rem;">
                 <h2 class="form-outline mb-4">Assignment</h2>

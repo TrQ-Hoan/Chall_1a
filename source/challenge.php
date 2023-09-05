@@ -88,8 +88,10 @@ $chall_file_name = pathinfo($cur_chall_obj['files'], PATHINFO_FILENAME);
                 <!-- Hints -->
                 <div class="small text-secondary"><sub>Hints</sub></div>
                 <b><?php echo $cur_chall_obj['hints']; ?></b>
-                <!-- Error message -->
-                <div class="text-center"><a style="color:red"><?php echo $user_error; ?></a></div>
+                <?php if (isset($challenge_error) && !empty($challenge_error)) { ?>
+                    <!-- Error message -->
+                    <div class="text-center"><a style="color:red"><?php echo $user_error; ?></a></div>
+                <?php } ?>
 
                 <div class="input-group mt-2">
                     <input type="text" class="form-control" name="submit_chall" placeholder="Type your answer" <?php echo isset($_POST['submit_chall']) ? 'value="' . $_POST['submit_chall'] . '"' : ''; ?>>

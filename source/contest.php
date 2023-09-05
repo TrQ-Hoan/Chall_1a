@@ -176,10 +176,11 @@ if (isset($_POST['update_challenge'])) {
                 <div class="mb-4">
                     <input class="form-control" type="file" name="challFile">
                 </div>
-
-                <div class="text-center">
-                    <a style="color:red"><?php echo $challenge_error; ?></a>
-                </div>
+                <?php if (isset($challenge_error) && !empty($challenge_error)) { ?>
+                    <div class="text-center">
+                        <a style="color:red"><?php echo $challenge_error; ?></a>
+                    </div>
+                <?php } ?>
 
                 <!-- Submit button -->
                 <button type="submit" class="btn btn-primary btn-block mb-3" name="<?php echo $page_stat_cfg; ?>" <?php echo isset($cur_chall_obj) ? 'value="' . $cur_chall_obj['id'] . '"' : ''; ?>>
